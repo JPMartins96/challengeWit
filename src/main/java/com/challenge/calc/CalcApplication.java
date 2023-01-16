@@ -1,10 +1,10 @@
 package com.challenge.calc;
 
-import com.challenge.calc.config.RabbitmqConfig;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.TopicExchange;
+import com.challenge.calc.controller.RabbitmqConfig;
+import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -24,6 +24,17 @@ public class CalcApplication {
 	@Bean
 	Binding binding(Queue queue, TopicExchange exchange) {
 		return BindingBuilder.bind(queue).to(exchange).with(RabbitmqConfig.ROUTING_KEY);
+	}
+
+	@Bean
+	Jackson2JsonMessageConverter messageConverter(){
+		return new Jackson2JsonMessageConverter();
+	}
+	@Bean
+	public AmqpTemplate template(ConnectionFactory connectionFactory){
+		RabbitTemplate template = new RabbitTemplate(connectionFactory);
+		template.setMessageConverter(messageConverter());
+		return template;
 	}
 
 	public static void main(String[] args) {
