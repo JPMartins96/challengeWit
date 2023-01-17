@@ -24,11 +24,6 @@ public class MessageListener {
 
         System.out.println(operator+a+b+"Feito");*/
 
-        GsonJsonParser parser = new GsonJsonParser();
-
-        String operator = parser.getClass().toString();
-
-        System.out.println(operator);
 
     }
 }

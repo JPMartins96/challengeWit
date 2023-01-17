@@ -9,10 +9,15 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.challenge</groupId>
-	<artifactId>calc</artifactId>
+	<artifactId>chellenge</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
 	<name>calc</name>
 	<description>WIT Challenge</description>
+	<modules>
+		<module>rest</module>
+		<module>calc</module>
+	</modules>
 	<properties>
 		<java.version>11</java.version>
 	</properties>
