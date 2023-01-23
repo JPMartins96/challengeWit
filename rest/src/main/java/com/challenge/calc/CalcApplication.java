@@ -1,44 +1,59 @@
 package com.challenge.calc;
 
+import com.challenge.calc.controller.CalcController;
 import com.challenge.calc.controller.RabbitmqConfig;
-import org.springframework.amqp.core.*;
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.DeliverCallback;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 
-@SpringBootApplication
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+
 public class CalcApplication {
-	@Bean
-	Queue queue() {
-		return new Queue(RabbitmqConfig.QUEUE_NAME, false);
-	}
 
-	@Bean
-	TopicExchange exchange() {
-		return new TopicExchange(RabbitmqConfig.EXCHANGE_NAME);
-	}
+	private final static String QUEUE_NAME = RabbitmqConfig.QUEUE_NAME;
 
-	@Bean
-	Binding binding(Queue queue, TopicExchange exchange) {
-		return BindingBuilder.bind(queue).to(exchange).with(RabbitmqConfig.ROUTING_KEY);
-	}
+	public static void main(String[] argv) throws Exception {
+		RabbitTemplate rabbitTemplate = new RabbitTemplate();
+		ConnectionFactory factory = new ConnectionFactory();
+		factory.setHost("localhost");
+		Connection connection = factory.newConnection();
+		Channel channel = connection.createChannel();
 
-	@Bean
-	Jackson2JsonMessageConverter messageConverter(){
-		return new Jackson2JsonMessageConverter();
-	}
-	@Bean
-	public AmqpTemplate template(ConnectionFactory connectionFactory){
-		RabbitTemplate template = new RabbitTemplate(connectionFactory);
-		template.setMessageConverter(messageConverter());
-		return template;
-	}
+		channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+		System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
-	public static void main(String[] args) {
-		SpringApplication.run(CalcApplication.class, args);
-	}
+		DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+			String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+			System.out.println(" [x] Received '" + message + "'");
+			String resultado = "0";
 
+			String arrMessage[] = message.split(",");
+
+			BigDecimal a = new BigDecimal(arrMessage[1]);
+			BigDecimal b = new BigDecimal(arrMessage[2]);
+
+
+			switch (arrMessage[0]){
+				case "add":
+					resultado = CalcController.add(a,b);
+					break;
+				case "sub":
+					resultado = CalcController.sub(a,b);
+					break;
+				case "multiply":
+					resultado = CalcController.multiply(a,b);
+					break;
+				case "divide":
+					resultado = CalcController.divide(a,b);
+					break;
+				default:
+					resultado = "Erro";
+			}
+			System.out.println("Resultado: "+resultado);
+		};
+		channel.basicConsume(QUEUE_NAME, true, deliverCallback, consumerTag -> { });
+	}
 }
